@@ -1,11 +1,14 @@
-
-SOURCES = $(wildcard src/*.cpp)
-
-include ../../plugin.mk
+RACK_DIR ?= ../..
 
 
-dist: all
-	mkdir -p dist/Autodafe
-	cp LICENSE* dist/Autodafe/
-	cp plugin.* dist/Autodafe/
-	cp -R res dist/Autodafe/
+SOURCES = $(wildcard src/*.cpp)   $(wildcard src/*.c)
+
+LDFLAGS += -Lsrc/stk/src -lstk
+
+LDFLAGS += -Lsrc/Gamma/build/lib -lGamma
+
+
+DISTRIBUTABLES += $(wildcard LICENSE*) res
+# Must include the VCV plugin Makefile framework
+include $(RACK_DIR)/plugin.mk
+

@@ -3,11 +3,12 @@
 //
 //**************************************************************************************
 
+#include "plugin.hpp"
 
-#include "Autodafe.hpp"
 
 struct Multiple28 : Module{
-	enum ParamIds {	
+	enum ParamIds {
+		
 		NUM_PARAMS
 	};
 	enum InputIds {
@@ -36,109 +37,121 @@ struct Multiple28 : Module{
 	};
 
 	
+
 	Multiple28();
-	void step();
+	void process(const ProcessArgs &args);
 };
 
 
 Multiple28::Multiple28() {
-	params.resize(NUM_PARAMS);
-	inputs.resize(NUM_INPUTS);
-	outputs.resize(NUM_OUTPUTS);
+config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS);
+
+	//params.resize(NUM_PARAMS);
+	//inputs.resize(NUM_INPUTS);
+	//outputs.resize(NUM_OUTPUTS);
 }
 
 
-void Multiple28::step() {
+void Multiple28::process(const ProcessArgs &args) {
 	
-	float IN1 = getf(inputs[INPUT1]);
-	float IN2 = getf(inputs[INPUT2]);
+	float IN1 = inputs[INPUT1].getVoltage();
+	float IN2 = inputs[INPUT2].getVoltage();
 
 	// Set outputs
-	//FIRST COLUMN
-	if (outputs[OUT11]) {
-		*outputs[OUT11] = IN1;
+	//first column
+	if (outputs[OUT11].isConnected()) {
+		outputs[OUT11].setVoltage(IN1);
 	}
 	
-	if (outputs[OUT12]) {
-		*outputs[OUT12] = IN1;
+	if (outputs[OUT12].isConnected()) {
+		outputs[OUT12].setVoltage(IN1);
 	}
 
-	if (outputs[OUT13]) {
-		*outputs[OUT13] = IN1;
+	if (outputs[OUT13].isConnected()) {
+		outputs[OUT13].setVoltage(IN1);
 	}
 
-	if (outputs[OUT14]) {
-		*outputs[OUT14] = IN1;
+	if (outputs[OUT14].isConnected()) {
+		outputs[OUT14].setVoltage(IN1);
 	}
 
-	if (outputs[OUT15]) {
-		*outputs[OUT15] = IN1;
+	if (outputs[OUT15].isConnected()) {
+		outputs[OUT15].setVoltage(IN1);
 	}
 
-	if (outputs[OUT16]) {
-		*outputs[OUT16] = IN1;
+	if (outputs[OUT16].isConnected()) {
+		outputs[OUT16].setVoltage(IN1);
 	}
 
-	if (outputs[OUT17]) {
-		*outputs[OUT17] = IN1;
+	if (outputs[OUT17].isConnected()) {
+		outputs[OUT17].setVoltage(IN1);
 	}
 
-	if (outputs[OUT18]) {
-		*outputs[OUT18] = IN1;
+	if (outputs[OUT18].isConnected()) {
+		outputs[OUT18].setVoltage(IN1);
 	}
 
 
 	//SECOND COLUMN
-	if (outputs[OUT21]) {
-		*outputs[OUT21] = IN2;
+	if (outputs[OUT21].isConnected()) {
+		outputs[OUT21].setVoltage(IN2);
 	}
 
-	if (outputs[OUT22]) {
-		*outputs[OUT22] = IN2;
+	if (outputs[OUT22].isConnected()) {
+		outputs[OUT22].setVoltage(IN2);
 	}
 
-	if (outputs[OUT23]) {
-		*outputs[OUT23] = IN2;
+	if (outputs[OUT23].isConnected()) {
+		outputs[OUT23].setVoltage(IN2);
 	}
 
-	if (outputs[OUT24]) {
-		*outputs[OUT24] = IN2;
+	if (outputs[OUT24].isConnected()) {
+		outputs[OUT24].setVoltage(IN2);
 	}
 
-	if (outputs[OUT25]) {
-		*outputs[OUT25] = IN2;
+	if (outputs[OUT25].isConnected()) {
+		outputs[OUT25].setVoltage(IN2);
 	}
 
-	if (outputs[OUT26]) {
-		*outputs[OUT26] = IN2;
+	if (outputs[OUT26].isConnected()) {
+		outputs[OUT26].setVoltage(IN2);
 	}
 
-	if (outputs[OUT27]) {
-		*outputs[OUT27] = IN2;
+	if (outputs[OUT27].isConnected()) {
+		outputs[OUT27].setVoltage(IN2);
 	}
 
-	if (outputs[OUT28]) {
-		*outputs[OUT28] = IN2;
+	if (outputs[OUT28].isConnected()) {
+		outputs[OUT28].setVoltage(IN2);
 	}
+
+	
+
+
+
 	
 }
 
-Multiple28Widget::Multiple28Widget() {
-	Multiple28 *module = new Multiple28();
-	setModule(module);
+
+struct Multiple28Widget : ModuleWidget {
+	Multiple28Widget(Multiple28 *module);
+};
+
+	Multiple28Widget::Multiple28Widget(Multiple28 *module) {
+		setModule(module);
 	box.size = Vec(15*6, 380);
 
 	{
-		SVGPanel *panel = new SVGPanel();
+		SvgPanel *panel = new SvgPanel();
 		panel->box.size = box.size;
-		panel->setBackground(SVG::load("plugins/Autodafe/res/Multiple28.svg"));
+		panel->setBackground(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Multiple28.svg")));
 		addChild(panel);
 	}
 
-	addChild(createScrew<ScrewSilver>(Vec(5, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(5, 365)));
-	addChild(createScrew<ScrewSilver>(Vec(70, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(70, 365)));
+	addChild(createWidget<ScrewSilver>(Vec(5, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(5, 365)));
+	addChild(createWidget<ScrewSilver>(Vec(70, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(70, 365)));
 
 	
 
@@ -162,7 +175,9 @@ Multiple28Widget::Multiple28Widget() {
 	addOutput(createOutput<PJ3410Port>(Vec(50, 235), module, Multiple28::OUT26));
 	addOutput(createOutput<PJ3410Port>(Vec(50, 270), module, Multiple28::OUT27));
 	addOutput(createOutput<PJ3410Port>(Vec(50, 305), module, Multiple28::OUT28));
+
 	
 }
 
+Model *modelMultiple28 = createModel<Multiple28, Multiple28Widget>("Multiple28");
 

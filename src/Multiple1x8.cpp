@@ -3,7 +3,7 @@
 //
 //**************************************************************************************
 
-#include "Autodafe.hpp"
+#include "plugin.hpp"
 
 struct Multiple18 : Module{
 	enum ParamIds {	
@@ -27,73 +27,82 @@ struct Multiple18 : Module{
 
 	
 	Multiple18();
-	void step();
+	void process(const ProcessArgs &args);
 };
 
 
 Multiple18::Multiple18() {
-	params.resize(NUM_PARAMS);
-	inputs.resize(NUM_INPUTS);
-	outputs.resize(NUM_OUTPUTS);
+	config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS);
+	//params.resize(NUM_PARAMS);
+	//inputs.resize(NUM_INPUTS);
+	//outputs.resize(NUM_OUTPUTS);
 }
 
 
-void Multiple18::step() {
+void Multiple18::process(const ProcessArgs &args) {
 	
-	float IN1 = getf(inputs[INPUT1]);
+	float IN1 = inputs[INPUT1].getVoltage();
 	
 
 	// Set outputs
-	if (outputs[OUT11]) {
-		*outputs[OUT11] = IN1;
+	if (outputs[OUT11].isConnected()) {
+		outputs[OUT11].setVoltage(IN1);
 	}
 	
-	if (outputs[OUT12]) {
-		*outputs[OUT12] = IN1;
+	if (outputs[OUT12].isConnected()) {
+		outputs[OUT12].setVoltage(IN1);
 	}
 
-	if (outputs[OUT13]) {
-		*outputs[OUT13] = IN1;
+	if (outputs[OUT13].isConnected()) {
+		outputs[OUT13].value= IN1;
 	}
 
-	if (outputs[OUT14]) {
-		*outputs[OUT14] = IN1;
+	if (outputs[OUT14].isConnected()) {
+		outputs[OUT14].setVoltage(IN1);
 	}
 
-	if (outputs[OUT15]) {
-		*outputs[OUT15] = IN1;
+	if (outputs[OUT15].isConnected()) {
+		outputs[OUT15].setVoltage(IN1);
 	}
 
-	if (outputs[OUT16]) {
-		*outputs[OUT16] = IN1;
+	if (outputs[OUT16].isConnected()) {
+		outputs[OUT16].setVoltage(IN1);
 	}
 
-	if (outputs[OUT17]) {
-		*outputs[OUT17] = IN1;
+	if (outputs[OUT17].isConnected()) {
+		outputs[OUT17].setVoltage(IN1);
 	}
 
-	if (outputs[OUT18]) {
-		*outputs[OUT18] = IN1;
+	if (outputs[OUT18].isConnected()) {
+		outputs[OUT18].setVoltage(IN1);
 	}
 
 
 	
 }
 
-Multiple18Widget::Multiple18Widget() {
-	Multiple18 *module = new Multiple18();
-	setModule(module);
+
+struct Multiple18Widget : ModuleWidget {
+	Multiple18Widget(Multiple18 *module);
+};
+
+	Multiple18Widget::Multiple18Widget(Multiple18 *module) {
+		setModule(module);
+
+
+
+
 	box.size = Vec(15*3, 380);
 
 	{
-		SVGPanel *panel = new SVGPanel();
+		SvgPanel *panel = new SvgPanel();
 		panel->box.size = box.size;
-		panel->setBackground(SVG::load("plugins/Autodafe/res/Multiple18.svg"));
+		panel->setBackground(APP->window->loadSvg(asset::plugin(pluginInstance, "res/Multiple18.svg")));
 		addChild(panel);
 	}
 
-	addChild(createScrew<ScrewSilver>(Vec(1, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(1, 365)));
+	addChild(createWidget<ScrewSilver>(Vec(1, 0)));
+	addChild(createWidget<ScrewSilver>(Vec(1, 365)));
 	
 	addInput(createInput<PJ3410Port>(Vec(10, 20), module, Multiple18::INPUT1));
 	
@@ -107,3 +116,8 @@ Multiple18Widget::Multiple18Widget() {
 	addOutput(createOutput<PJ3410Port>(Vec(10, 305), module, Multiple18::OUT18));
 
 } 
+
+Model *modelMultiple18 = createModel<Multiple18, Multiple18Widget>("Multiple18");
+
+
+
