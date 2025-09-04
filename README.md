@@ -20,5 +20,3 @@ Bitcrusher
 
 Phaser
 
-
-My VCV Rack Modules Pack works on Mac/PC/Linux using Rack 0.3.2 (current release at the moment), not with 0.3.1. 
