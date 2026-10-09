@@ -1,5 +1,7 @@
 # Autodafe Module Pack for VCV Rack
 
+![Autodafe VCV Rack Modules](https://www.autodafe.net/images/com_eshop/products/resized/autodafe-modules-052-1000x800.png)
+
 Autodafe Module Pack for VCV Rack contains a collection of utility, sequencer,
 filter, oscillator, and effects modules:
 
