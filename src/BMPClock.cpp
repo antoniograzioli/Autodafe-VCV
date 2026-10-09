@@ -100,6 +100,7 @@ json_t *dataToJson() override {
 	void onReset() override {
 		bpmint=120;
 		bpmdec=0;
+		clockLight = 0.0f;
 	}
 
 	void onRandomize() override {
@@ -119,9 +120,8 @@ dsp::SchmittTrigger btndwn;
 dsp::SchmittTrigger btnupdec;
 dsp::SchmittTrigger btndwndec;
 
-dsp::PulseGenerator pulse;
-
-	float clock_phase = 0.f;
+	double clock_phase = 0.0;
+	float clockLight = 0.0f;
 	uint32_t tick = UINT32_MAX;
 
 
@@ -196,6 +196,11 @@ if (btnupdec.process(params[BTNUPDEC].getValue()))
 
 bpm=bpmint+bpmdec*0.1;
 
+	// Clock outputs are one-sample pulses. Clear every output before
+	// generating the next pulse so no output can remain latched high.
+	for (int outputId = OUT_1; outputId < NUM_OUTPUTS; outputId++)
+		outputs[outputId].setVoltage(0.0f);
+
 
 
 
@@ -211,15 +216,27 @@ bpm=bpmint+bpmdec*0.1;
 
 
 
-	clock_phase += (bpm*4 / 60.f) / args.sampleRate * 12;
+	if (args.sampleRate > 0.0 && bpm > 0.0f)
+		clock_phase += static_cast<double>(bpm) * 48.0 /
+			(60.0 * static_cast<double>(args.sampleRate));
 
 	bool ticked = false;
 
-	if(clock_phase >= 1.f) {
+	while (clock_phase >= 1.0) {
 		ticked = true;
-		if(++tick >= 1152u) tick = 0u;
-		clock_phase -= 1.f;
+		if (tick >= 1151u)
+			tick = 0u;
+		else
+			++tick;
+		clock_phase -= 1.0;
 	}
+
+	// Trigger outputs are intentionally one-sample pulses. Keep the LED visible
+	// for a short visual decay without affecting generated clock timing.
+	clockLight *= std::exp(-args.sampleTime / 0.02f);
+	if (ticked)
+		clockLight = 1.0f;
+	lights[CLOCK_LIGHT].setBrightness(clockLight);
 
 	if(ticked) {
 		
@@ -242,7 +259,7 @@ bpm=bpmint+bpmdec*0.1;
 		//MULTIPLIER
 		outputs[OUT_1_1].setVoltage(!(tick % 48u)*5);
 		outputs[OUT_1_2].setVoltage(!(tick % 24u)*5);
-		outputs[OUT_1_3].setVoltage(!(tick % 18u)*5);
+		outputs[OUT_1_3].setVoltage(!(tick % 16u)*5);
 		outputs[OUT_1_4].setVoltage(!(tick % 12u)*5);
 		outputs[OUT_1_8].setVoltage(!(tick % 6u)*5);
 		outputs[OUT_1_12].setVoltage(!(tick % 4u)*5);
@@ -255,10 +272,6 @@ bpm=bpmint+bpmdec*0.1;
 
 
 	} else {
-		lights[CLOCK_LIGHT].setBrightness(0.0);
-
-
-
 		//DIVIDER
 		outputs[OUT_1].setVoltage(0.f);
 		outputs[OUT_2].setVoltage(0.f);
