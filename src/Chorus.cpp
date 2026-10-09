@@ -7,11 +7,11 @@
 
 
 #include "plugin.hpp"
-#include <stdlib.h>
+#include <memory>
 
 
 
-#include "stk/include/Chorus.h"
+#include "stk/Chorus.h"
 
 
 using namespace stk;
@@ -43,15 +43,14 @@ struct ChorusFx : Module{
 
 	  
 
-	//Chorus *cho; 
-
-	Chorus *cho = new Chorus(1000); // OK
+	std::unique_ptr<Chorus> cho;
 
 	
 
 
 
-	void process(const ProcessArgs &args);
+	void process(const ProcessArgs &args) override;
+	void onSampleRateChange(const SampleRateChangeEvent& e) override;
 };
 
 
@@ -62,14 +61,14 @@ ChorusFx::ChorusFx() {
 config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS);
 configParam(ChorusFx::PARAM_RATE, 0, 1, 0, "");
 configParam(ChorusFx::PARAM_DEPTH, 0, 1, 0, "");
-	
-	//params.resize(NUM_PARAMS);
-	//inputs.resize(NUM_INPUTS);
-	//outputs.resize(NUM_OUTPUTS);
+	cho.reset(new Chorus(1000));
+}
 
-
-
-
+void ChorusFx::onSampleRateChange(const SampleRateChangeEvent& e) {
+	// STK uses a process-global rate and Chorus allocates rate-dependent state.
+	// Rack dispatches this event on the engine thread, outside process().
+	Stk::setSampleRate(e.sampleRate);
+	cho.reset(new Chorus(1000));
 }
 
 
@@ -98,7 +97,7 @@ void ChorusFx::process(const ProcessArgs &args) {
 
 
 
-	outputs[OUT].value= cho->lastOut(0) * 5;
+	outputs[OUT].setVoltage(cho->lastOut(0) * 5);
 	
 
 

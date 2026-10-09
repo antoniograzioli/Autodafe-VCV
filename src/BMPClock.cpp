@@ -255,7 +255,7 @@ bpm=bpmint+bpmdec*0.1;
 
 
 	} else {
-		lights[CLOCK_LIGHT].value=0.0;
+		lights[CLOCK_LIGHT].setBrightness(0.0);
 
 
 

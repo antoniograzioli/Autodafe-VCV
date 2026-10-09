@@ -43,10 +43,10 @@ struct MultiModeFilter : Module{
 
 
 	MultiModeFilter();
-VAStateVariableFilter *lpFilter = new VAStateVariableFilter() ;	// create a lpFilter;
-VAStateVariableFilter *hpFilter = new VAStateVariableFilter() ;	// create a lpFilter;
-VAStateVariableFilter *bpFilter = new VAStateVariableFilter() ;	// create a lpFilter;
-VAStateVariableFilter *npFilter = new VAStateVariableFilter() ;	// create a lpFilter;
+VAStateVariableFilter lpFilter;
+VAStateVariableFilter hpFilter;
+VAStateVariableFilter bpFilter;
+VAStateVariableFilter npFilter;
 
 
 	void process(const ProcessArgs &args);
@@ -88,7 +88,6 @@ float outNP=0.0f;;
 
 
 
-//VAStateVariableFilter *peakFilter = new VAStateVariableFilter();
 
 
 
@@ -122,48 +121,48 @@ void MultiModeFilter::process(const ProcessArgs &args) {
 
  
 
-	lpFilter->setFilterType(0);
-	hpFilter->setFilterType(2);
-	bpFilter->setFilterType(1);
-	npFilter->setFilterType(5);
+	lpFilter.setFilterType(0);
+	hpFilter.setFilterType(2);
+	bpFilter.setFilterType(1);
+	npFilter.setFilterType(5);
 
 	
-lpFilter->setCutoffFreq(cutoff);
-hpFilter->setCutoffFreq(cutoff); 
-bpFilter->setCutoffFreq(cutoff);
-npFilter->setCutoffFreq(cutoff);
+lpFilter.setCutoffFreq(cutoff);
+hpFilter.setCutoffFreq(cutoff); 
+bpFilter.setCutoffFreq(cutoff);
+npFilter.setCutoffFreq(cutoff);
 
 
-lpFilter->setResonance(res);
-hpFilter->setResonance(res);
-bpFilter->setResonance(res);
-npFilter->setResonance(res);
-
-
-
-
-
-lpFilter->setSampleRate(44100.0f);
-hpFilter->setSampleRate(44100.0f);
-bpFilter->setSampleRate(44100.0f);
-npFilter->setSampleRate(44100.0f);
+lpFilter.setResonance(res);
+hpFilter.setResonance(res);
+bpFilter.setResonance(res);
+npFilter.setResonance(res);
 
 
 
 
 
-outLP = lpFilter->processAudioSample(input,1.0f);
-outHP = hpFilter->processAudioSample(input,1.0f);
-outBP = bpFilter->processAudioSample(input,1.0f);
-outNP = npFilter->processAudioSample(input,1.0f);
+lpFilter.setSampleRate(44100.0f);
+hpFilter.setSampleRate(44100.0f);
+bpFilter.setSampleRate(44100.0f);
+npFilter.setSampleRate(44100.0f);
 
 
 
 
-	outputs[OUTLPF].value=outLP*5.0f;
-	outputs[OUTHPF].value= outHP*5.0f;
-	outputs[OUTBPF].value= outBP*5.0f;
-	outputs[OUTNPF].value= outNP*5.0f;
+
+outLP = lpFilter.processAudioSample(input,1.0f);
+outHP = hpFilter.processAudioSample(input,1.0f);
+outBP = bpFilter.processAudioSample(input,1.0f);
+outNP = npFilter.processAudioSample(input,1.0f);
+
+
+
+
+	outputs[OUTLPF].setVoltage(outLP*5.0f);
+	outputs[OUTHPF].setVoltage(outHP*5.0f);
+	outputs[OUTBPF].setVoltage(outBP*5.0f);
+	outputs[OUTNPF].setVoltage(outNP*5.0f);
 
 	
 

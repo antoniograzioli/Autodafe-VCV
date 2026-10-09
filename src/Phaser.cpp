@@ -137,7 +137,7 @@ float rate ;
     float out;
 
 
-Phaser *pha = new Phaser();
+Phaser pha;
 
 
 
@@ -191,15 +191,15 @@ void PhaserFx::process(const ProcessArgs &args) {
 
 	 input = inputs[INPUT].getVoltage() / 5.0;
 
-		pha->Rate(rate);
-		pha->Feedback(feedback);
-		pha->Depth (depth);
+		pha.Rate(rate);
+		pha.Feedback(feedback);
+		pha.Depth (depth);
 	
-	 out = pha->Update(input);
+	 out = pha.Update(input);
 
 
 
-	outputs[OUT].value= out * 5;
+	outputs[OUT].setVoltage(out * 5);
 	
 
 

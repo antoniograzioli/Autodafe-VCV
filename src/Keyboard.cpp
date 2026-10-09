@@ -144,7 +144,7 @@ configParam(KeyboardModel::PARAM_AA, 0.0, 1.0, 0.0, "");
 
 
 void KeyboardModel::process(const ProcessArgs &args) {
-outputs[GATE_OUT].value=0.0;
+outputs[GATE_OUT].setVoltage(0.0);
 
 
 
@@ -177,7 +177,7 @@ if (btndwn.process(params[BTNDWN].getValue()))
 	
 if(C.process(params[PARAM_C].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=0;
 
 	}
@@ -185,7 +185,7 @@ if(C.process(params[PARAM_C].getValue()))
 
 if(CC.process(params[PARAM_CC].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=1;
 
 	}
@@ -194,14 +194,14 @@ if(CC.process(params[PARAM_CC].getValue()))
 
 if(D.process(params[PARAM_D].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=2;
 
 	}
 
 	if(DD.process(params[PARAM_DD].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=3;
 
 	}
@@ -210,7 +210,7 @@ if(D.process(params[PARAM_D].getValue()))
 
 if(E.process(params[PARAM_E].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=4;
 
 	}
@@ -219,14 +219,14 @@ if(E.process(params[PARAM_E].getValue()))
 
 	if(F.process(params[PARAM_F].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=5;
 
 	}
 
 		if(FF.process(params[PARAM_FF].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=6;
 
 	}
@@ -235,13 +235,13 @@ if(E.process(params[PARAM_E].getValue()))
 
 	if(G.process(params[PARAM_G].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=7;
 
 	}
 	if(GG.process(params[PARAM_GG].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=8;
 
 	}
@@ -249,21 +249,21 @@ if(E.process(params[PARAM_E].getValue()))
 
 	if(A.process(params[PARAM_A].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=9;
 
 	}
 
 	if(AA.process(params[PARAM_AA].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=10;
 
 	}
 
 	if(B.process(params[PARAM_B].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=11;
 
 	}
@@ -271,7 +271,7 @@ if(E.process(params[PARAM_E].getValue()))
 
 	if(C2.process(params[PARAM_C2].getValue()))
 	{
-		outputs[GATE_OUT].value=10.0;
+		outputs[GATE_OUT].setVoltage(10.0);
 		note=12;
 
 	}

@@ -7,11 +7,11 @@
 
 
 #include "plugin.hpp"
-#include <stdlib.h>
+#include <memory>
 
 
 
-#include "stk/include/NRev.h"
+#include "stk/NRev.h"
 
 
 using namespace stk;
@@ -44,15 +44,14 @@ struct ReverbFx : Module{
 
 	  
 
-	//Reverb *cho; 
-
-	NRev *reverb = new NRev(); // OK
+	std::unique_ptr<NRev> reverb;
 
 	
 
 
 
-	void process(const ProcessArgs &args);
+	void process(const ProcessArgs &args) override;
+	void onSampleRateChange(const SampleRateChangeEvent& e) override;
 };
 
 
@@ -67,13 +66,13 @@ ReverbFx::ReverbFx() {
 configParam(ReverbFx::PARAM_DRY_WET, 0, 1, 0, "");
 
 
-	//params.resize(NUM_PARAMS);
-	//inputs.resize(NUM_INPUTS);
-	//outputs.resize(NUM_OUTPUTS);
+	reverb.reset(new NRev());
+}
 
-
-
-
+void ReverbFx::onSampleRateChange(const SampleRateChangeEvent& e) {
+	// NRev sizes its delay lines from STK's global rate in its constructor.
+	Stk::setSampleRate(e.sampleRate);
+	reverb.reset(new NRev());
 }
 
 
@@ -99,12 +98,7 @@ void ReverbFx::process(const ProcessArgs &args) {
 	
 	
 	reverb->tick(input, 0);
-	//reverb->tick(input, 1);
-
-
-
-	outputs[OUT].value= (input + reverb->lastOut(0)*params[PARAM_DRY_WET].getValue())* 5;
-	//outputs[OUTR].value= (input +reverb->lastOut(1) *params[PARAM_DRY_WET].getValue())* 5;
+	outputs[OUT].setVoltage((input + reverb->lastOut(0)*params[PARAM_DRY_WET].getValue())* 5);
 	
 
 

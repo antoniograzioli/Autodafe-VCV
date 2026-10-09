@@ -73,7 +73,7 @@ void FoldBack::process(const ProcessArgs &args) {
 
 
 
-	outputs[OUTPUT].value= 5.0* foldback(in, threshold+coeff);
+	outputs[OUTPUT].setVoltage(5.0* foldback(in, threshold+coeff));
 
 
 

@@ -145,9 +145,9 @@ void SEQ8::step() {
 	const float lightLambda = 0.075;
 
 
-	outputs[CLOCK_OUT].value=0;
+	outputs[CLOCK_OUT].setVoltage(0);
 
-	outputs[CLOCK_GATE_OUT].value=0;
+	outputs[CLOCK_GATE_OUT].setVoltage(0);
 
 	// Run
 	if (runningTrigger.process(params[RUN_PARAM].value)) {
@@ -162,7 +162,7 @@ void SEQ8::step() {
 	 
 
 
-	lights[RUNNING_LIGHT].value = running ? 1.0 : 0.0;
+	lights[RUNNING_LIGHT].setBrightness(running ? 1.0 : 0.0);
 
 	bool nextStep = false;
 
@@ -173,7 +173,7 @@ void SEQ8::step() {
 				phase = 0.0;
 				nextStep = true;
 
-				outputs[CLOCK_OUT].value=1;
+				outputs[CLOCK_OUT].setVoltage(1);
 			}
 		}
 		else {
@@ -183,7 +183,7 @@ void SEQ8::step() {
 			if (phase >= 1.0) {
 				phase -= 1.0;
 				nextStep = true;
-				outputs[CLOCK_OUT].value=1;
+				outputs[CLOCK_OUT].setVoltage(1);
 			}
 		}
 	}
@@ -223,15 +223,15 @@ void SEQ8::step() {
 		else if (gateMode == RETRIGGER)
 			gateOn = gateOn && !pulse;
 
-		outputs[GATE_OUTPUT + i].value = gateOn ? 10.0 : 0.0;
+		outputs[GATE_OUTPUT + i].setVoltage(gateOn ? 10.0 : 0.0);
 
-		if (outputs[GATE_OUTPUT + i].value!=0)
+		if (outputs[GATE_OUTPUT + i].getVoltage()!=0)
 		{
-			outputs[CLOCK_GATE_OUT].value=gateOn ? 1.0 : 0.0;
+			outputs[CLOCK_GATE_OUT].setVoltage(gateOn ? 1.0 : 0.0);
 		}
 
 		stepLights[i] -= stepLights[i] / lightLambda / APP->engine->getSampleRate();
-		lights[GATE_LIGHTS + i].value = gateState[i] ? 1.0 - stepLights[i] : stepLights[i];
+		lights[GATE_LIGHTS + i].setBrightness(gateState[i] ? 1.0 - stepLights[i] : stepLights[i]);
 	}
 
 	// Rows
@@ -245,15 +245,15 @@ void SEQ8::step() {
 		gatesOn = gatesOn && !pulse;
 
 	// Outputs
-	outputs[ROW1_OUTPUT].value = row1;
-	outputs[ROW2_OUTPUT].value = row2;
-	outputs[ROW3_OUTPUT].value = row3;
-	outputs[GATES_OUTPUT].value = gatesOn ? 10.0 : 0.0;
-	lights[RESET_LIGHT].value = resetLight;
-	lights[GATES_LIGHT].value = gatesOn ? 1.0 : 0.0;
-	lights[ROW_LIGHTS].value = row1 / 10.0;
-	lights[ROW_LIGHTS + 1].value = row2 / 10.0;
-	lights[ROW_LIGHTS + 2].value = row3 / 10.0;
+	outputs[ROW1_OUTPUT].setVoltage(row1);
+	outputs[ROW2_OUTPUT].setVoltage(row2);
+	outputs[ROW3_OUTPUT].setVoltage(row3);
+	outputs[GATES_OUTPUT].setVoltage(gatesOn ? 10.0 : 0.0);
+	lights[RESET_LIGHT].setBrightness(resetLight);
+	lights[GATES_LIGHT].setBrightness(gatesOn ? 1.0 : 0.0);
+	lights[ROW_LIGHTS].setBrightness(row1 / 10.0);
+	lights[ROW_LIGHTS + 1].setBrightness(row2 / 10.0);
+	lights[ROW_LIGHTS + 2].setBrightness(row3 / 10.0);
 }
 
 

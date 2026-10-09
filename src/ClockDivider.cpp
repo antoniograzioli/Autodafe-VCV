@@ -97,68 +97,68 @@ struct AutodafeClockDivider : Module {
 		}
 
 		if (clock2Count < divider2 / 2) {
-			outputs[OUT2].value = 10.0;
+			outputs[OUT2].setVoltage(10.0);
 			if (clock2Count == 0) {
-				lights[LIGHT1].value = 1.0;
+				lights[LIGHT1].setBrightness(1.0);
 			} else {
-				lights[LIGHT1].value = (blinkPhase < 0.5)?1.0:0.0;
+				lights[LIGHT1].setBrightness((blinkPhase < 0.5)?1.0:0.0);
 			}
 
 		} else {
-			outputs[OUT2].value = 0.0;
-			lights[LIGHT1].value = 0.0;
+			outputs[OUT2].setVoltage(0.0);
+			lights[LIGHT1].setBrightness(0.0);
 		}
 
 		if (clock4Count < divider4 / 2) {
-			outputs[OUT4].value = 10.0;
+			outputs[OUT4].setVoltage(10.0);
 			if (clock4Count == 0) {
-				lights[LIGHT2].value = 1.0;
+				lights[LIGHT2].setBrightness(1.0);
 			} else {
-				lights[LIGHT2].value = (blinkPhase < 0.5)?1.0:0.0;
+				lights[LIGHT2].setBrightness((blinkPhase < 0.5)?1.0:0.0);
 			}
 
 		} else {
-			outputs[OUT4].value = 0.0;
-			lights[LIGHT2].value = 0.0;
+			outputs[OUT4].setVoltage(0.0);
+			lights[LIGHT2].setBrightness(0.0);
 		}
 
 		if (clock8Count < divider8 / 2) {
-			outputs[OUT8].value = 10.0;
+			outputs[OUT8].setVoltage(10.0);
 			if (clock8Count == 0) {
-				lights[LIGHT3].value = 1.0;
+				lights[LIGHT3].setBrightness(1.0);
 			} else {
-				lights[LIGHT3].value = (blinkPhase < 0.5)?1.0:0.0;
+				lights[LIGHT3].setBrightness((blinkPhase < 0.5)?1.0:0.0);
 			}
 
 		} else {
-			outputs[OUT8].value = 0.0;
-			lights[LIGHT3].value = 0.0;
+			outputs[OUT8].setVoltage(0.0);
+			lights[LIGHT3].setBrightness(0.0);
 		}
 
 		if (clock16Count < divider16 / 2) {
-			outputs[OUT16].value = 10.0;
+			outputs[OUT16].setVoltage(10.0);
 			if (clock16Count == 0) {
-				lights[LIGHT4].value = 1.0;
+				lights[LIGHT4].setBrightness(1.0);
 			} else {
-				lights[LIGHT4].value = (blinkPhase < 0.5)?1.0:0.0;
+				lights[LIGHT4].setBrightness((blinkPhase < 0.5)?1.0:0.0);
 			}
 
 		} else {
-			outputs[OUT16].value = 0.0;
-			lights[LIGHT4].value = 0.0;
+			outputs[OUT16].setVoltage(0.0);
+			lights[LIGHT4].setBrightness(0.0);
 		}
 
 		if (clock32Count < divider32 / 2) {
-			outputs[OUT32].value = 10.0;
+			outputs[OUT32].setVoltage(10.0);
 			if (clock16Count == 0) {
-				lights[LIGHT5].value = 1.0;
+				lights[LIGHT5].setBrightness(1.0);
 			} else {
-				lights[LIGHT5].value = (blinkPhase < 0.5)?1.0:0.0;
+				lights[LIGHT5].setBrightness((blinkPhase < 0.5)?1.0:0.0);
 			}
 
 		} else {
-			outputs[OUT32].value = 0.0;
-			lights[LIGHT5].value = 0.0;
+			outputs[OUT32].setVoltage(0.0);
+			lights[LIGHT5].setBrightness(0.0);
 
 		}
 

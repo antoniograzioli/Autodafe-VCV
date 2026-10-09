@@ -54,7 +54,7 @@ void Multiple18::process(const ProcessArgs &args) {
 	}
 
 	if (outputs[OUT13].isConnected()) {
-		outputs[OUT13].value= IN1;
+		outputs[OUT13].setVoltage(IN1);
 	}
 
 	if (outputs[OUT14].isConnected()) {

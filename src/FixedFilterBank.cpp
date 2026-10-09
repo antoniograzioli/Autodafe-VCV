@@ -41,14 +41,14 @@ struct FixedFilter : Module{
 
 	FixedFilter();
 
-Biquad *bq1 = new Biquad();
-Biquad *bq2 = new Biquad();
-Biquad *bq3 = new Biquad();
-Biquad *bq4 = new Biquad();
-Biquad *bq5 = new Biquad();
-Biquad *bq6 = new Biquad();
-Biquad *bq7 = new Biquad();
-Biquad *bq8 = new Biquad();
+Biquad bq1;
+Biquad bq2;
+Biquad bq3;
+Biquad bq4;
+Biquad bq5;
+Biquad bq6;
+Biquad bq7;
+Biquad bq8;
 
 	
 	void process(const ProcessArgs &args);
@@ -98,30 +98,30 @@ void FixedFilter::process(const ProcessArgs &args) {
 	
 
 
-	bq1->setBiquad(bq_type_peak, 75.0 / args.sampleRate, 5, params[EQ1].getValue());
-	bq2->setBiquad(bq_type_peak, 125.0 / args.sampleRate, 5, params[EQ2].getValue());
-	bq3->setBiquad(bq_type_peak, 250.0 / args.sampleRate, 5, params[EQ3].getValue());
-	bq4->setBiquad(bq_type_peak, 500.0 / args.sampleRate, 5, params[EQ4].getValue());
-	bq5->setBiquad(bq_type_peak, 1000.0 / args.sampleRate, 5, params[EQ5].getValue());
-	bq6->setBiquad(bq_type_peak, 2000.0 / args.sampleRate, 5, params[EQ6].getValue());
-	bq7->setBiquad(bq_type_peak, 4000.0 / args.sampleRate, 5, params[EQ7].getValue());
-	bq8->setBiquad(bq_type_peak, 8000.0 / args.sampleRate, 5, params[EQ8].getValue());
+	bq1.setBiquad(bq_type_peak, 75.0 / args.sampleRate, 5, params[EQ1].getValue());
+	bq2.setBiquad(bq_type_peak, 125.0 / args.sampleRate, 5, params[EQ2].getValue());
+	bq3.setBiquad(bq_type_peak, 250.0 / args.sampleRate, 5, params[EQ3].getValue());
+	bq4.setBiquad(bq_type_peak, 500.0 / args.sampleRate, 5, params[EQ4].getValue());
+	bq5.setBiquad(bq_type_peak, 1000.0 / args.sampleRate, 5, params[EQ5].getValue());
+	bq6.setBiquad(bq_type_peak, 2000.0 / args.sampleRate, 5, params[EQ6].getValue());
+	bq7.setBiquad(bq_type_peak, 4000.0 / args.sampleRate, 5, params[EQ7].getValue());
+	bq8.setBiquad(bq_type_peak, 8000.0 / args.sampleRate, 5, params[EQ8].getValue());
 
 	
 	
 	
-	out = bq1->process(input);
-	out = bq2->process(out);
-	out = bq3->process(out);
-	out = bq4->process(out);
-	out = bq5->process(out);
-	out = bq6->process(out);
-	out = bq7->process(out);
-	out = bq8->process(out);
+	out = bq1.process(input);
+	out = bq2.process(out);
+	out = bq3.process(out);
+	out = bq4.process(out);
+	out = bq5.process(out);
+	out = bq6.process(out);
+	out = bq7.process(out);
+	out = bq8.process(out);
 
 
 
-	outputs[OUT].value= out*5;
+	outputs[OUT].setVoltage(out*5);
 	}
 
 

@@ -181,7 +181,7 @@ struct FormantFilter : Module {
 
 	FormantFilter();
 
-	FFilter *ffilter = new FFilter();
+	FFilter ffilter;
 
 
 	void process(const ProcessArgs &args);
@@ -215,10 +215,10 @@ void FormantFilter::process(const ProcessArgs &args) {
 	
 	float cv = clamp(inputs[CV_VOWEL].getVoltage() * params[ATTEN_PARAM].getValue(), 0.0f, 8.0f) ;
 	
-	ffilterout= ffilter->formant_filter(in,clamp((vowel+cv), 0.0f, 8.0f), 0);
+	ffilterout= ffilter.formant_filter(in,clamp((vowel+cv), 0.0f, 8.0f), 0);
 
 
-	outputs[OUTPUT].value= 5.0*ffilterout; 
+	outputs[OUTPUT].setVoltage(5.0*ffilterout); 
 
 
 }

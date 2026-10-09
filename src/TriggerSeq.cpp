@@ -210,7 +210,7 @@ void TriggerSeq::process(const ProcessArgs &args) {
 	
 	const float lightLambda = 0.05;
 
-outputs[CLOCK_OUT].value=0;
+outputs[CLOCK_OUT].setVoltage(0);
 
 	
 		// Run
@@ -226,7 +226,7 @@ if(inputs[START_INPUT].getVoltage()>0){running=true;}
 	if(inputs[STOP_INPUT].getVoltage()>0){running=false;}
 
 
-		lights[RUNNING_LIGHT].value = running ? 1.0 : 0.0;
+		lights[RUNNING_LIGHT].setBrightness(running ? 1.0 : 0.0);
 
 		bool nextStep = false;
 
@@ -236,7 +236,7 @@ if(inputs[START_INPUT].getVoltage()>0){running=true;}
 				if (clockTrigger.process(inputs[EXT_CLOCK_INPUT].getVoltage())) {
 					phase = 0.0;
 					nextStep = true;
-					outputs[CLOCK_OUT].value=1;
+					outputs[CLOCK_OUT].setVoltage(1);
 				}
 			}
 			else {
@@ -246,7 +246,7 @@ if(inputs[START_INPUT].getVoltage()>0){running=true;}
 				if (phase >= 1.0) {
 					phase -= 1.0;
 					nextStep = true;
-					outputs[CLOCK_OUT].value=1;
+					outputs[CLOCK_OUT].setVoltage(1);
 				}
 			}
 		}
@@ -342,12 +342,12 @@ if(inputs[START_INPUT].getVoltage()>0){running=true;}
 
 
 			gate[z] = (gateState[z][index] >= 1.0) && !nextStep ? 10.0 : 0.0;
-			outputs[GATES_OUTPUT + z].value= gate[z];
+			outputs[GATES_OUTPUT + z].setVoltage(gate[z]);
 			
 			
 			
 
-			lights[GATES_LIGHTS +z*16+i].value = (gateState[z][i] >= 1.0) ? 1.0 : 0.0;
+			lights[GATES_LIGHTS +z*16+i].setBrightness((gateState[z][i] >= 1.0) ? 1.0 : 0.0);
 
 
 
@@ -357,15 +357,15 @@ if(inputs[START_INPUT].getVoltage()>0){running=true;}
 			}
 		} 
 
-	lights[RESET_LIGHT].value = resetLight;
-		lights[GATE_LIGHTS + z].value  = (gateState[z][index] >= 1.0) ? 1.0 : 0.0;
+	lights[RESET_LIGHT].setBrightness(resetLight);
+		lights[GATE_LIGHTS + z].setBrightness((gateState[z][index] >= 1.0) ? 1.0 : 0.0);
 
 
 
 		
-		for (int y=0; y<16; y++){lights[STEP_LIGHTS + y].value=0;}
+		for (int y=0; y<16; y++){lights[STEP_LIGHTS + y].setBrightness(0);}
 
-		lights[STEP_LIGHTS + index].value  = 1.0;
+		lights[STEP_LIGHTS + index].setBrightness(1.0);
 
 	}
 	
