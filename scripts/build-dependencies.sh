@@ -58,12 +58,42 @@ fetch_source stk "$STK_COMMIT" "$STK_SHA256" thestk
 fetch_source Gamma "$GAMMA_COMMIT" "$GAMMA_SHA256" LancePutnam
 
 case "$ARCH_NAME" in
-	mac-x64) platform=Darwin; gamma_platform=macosx; target_flags="--target=x86_64-apple-darwin" ;;
-	mac-arm64) platform=Darwin; gamma_platform=macosx; target_flags="--target=arm64-apple-darwin" ;;
-	lin-x64) platform=Linux; gamma_platform=linux; target_flags="" ;;
-	win-x64) platform=Windows; gamma_platform=windows; target_flags="" ;;
-	*) echo "Unsupported dependency target: $ARCH_NAME" >&2; exit 2 ;;
+	mac-x64)
+		platform=Darwin
+		gamma_platform=macosx
+		target_flags=""
+		TOOL_PREFIX=${CC%-clang*}
+		AR_BIN="${TOOL_PREFIX}-ar"
+		RANLIB="${TOOL_PREFIX}-ranlib"
+		;;
+	mac-arm64)
+		platform=Darwin
+		gamma_platform=macosx
+		target_flags=""
+		TOOL_PREFIX=${CC%-clang*}
+		AR_BIN="${TOOL_PREFIX}-ar"
+		RANLIB="${TOOL_PREFIX}-ranlib"
+		;;
+	win-x64)
+		platform=Windows
+		gamma_platform=windows
+		target_flags=""
+		AR_BIN=$(command -v x86_64-w64-mingw32-ar)
+		RANLIB=$(command -v x86_64-w64-mingw32-ranlib)
+		;;
+	lin-x64)
+		platform=Linux
+		gamma_platform=linux
+		target_flags=""
+		AR_BIN=$(command -v x86_64-ubuntu16.04-linux-gnu-ar)
+		RANLIB=$(command -v x86_64-ubuntu16.04-linux-gnu-ranlib)
+		;;
+	*)
+		echo "Unsupported dependency target: $ARCH_NAME" >&2
+		exit 2
+		;;
 esac
+
 
 stk_build="$DEPS_ROOT/stk-build"
 # The upstream CMake file globs realtime/network sources even when REALTIME is
@@ -86,6 +116,8 @@ cmake -S "$SOURCE_ROOT/stk" -B "$stk_build" -G "$cmake_generator" \
 	-DENABLE_JACK=OFF -DENABLE_ALSA=OFF -DCOMPILE_PROJECTS=OFF \
 	-DCMAKE_INSTALL_PREFIX="$PREFIX" -DCMAKE_INSTALL_LIBDIR=lib
 cmake --build "$stk_build" --target install --parallel
+"$RANLIB" "$PREFIX/lib/libstk.a"
+
 
 gamma_build="$DEPS_ROOT/gamma-build"
 gamma_objects="$gamma_build/obj"
@@ -102,7 +134,7 @@ gamma_sources="arr Conversion Domain DFT FFT_fftpack fftpack++1 fftpack++2 Print
 		gamma_objects_list="$gamma_objects_list $object"
 	done
 	"$AR_BIN" crs "$PREFIX/lib/libGamma.a" $gamma_objects_list
-	"$RANLIB" "$PREFIX/lib/libGamma.a" 2>/dev/null || true
+	"$RANLIB" "$PREFIX/lib/libGamma.a"
 )
 cp -R "$SOURCE_ROOT/Gamma/Gamma" "$PREFIX/include/"
 cp -R "$SOURCE_ROOT/Gamma/Gamma" "$PREFIX/include/"
