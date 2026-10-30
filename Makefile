@@ -31,5 +31,6 @@ $(OBJECTS): $(DEPS_STAMP)
 
 .PHONY: audit-deps
 audit-deps: $(DEPS_STAMP)
-	@./scripts/audit-static-libraries.sh "$(DEPS_ARCH)" "$(DEPS_PREFIX)"
+	AR="$(AR)" CROSS_COMPILE="$(CROSS_COMPILE)" MACHINE="$(MACHINE)" \
+	./scripts/audit-static-libraries.sh "$(DEPS_ARCH)" "$(DEPS_PREFIX)"
 

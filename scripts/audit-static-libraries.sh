@@ -4,7 +4,19 @@ set -eu
 ARCH_NAME=$1
 PREFIX=$2
 AR=${AR:-ar}
-case "$AR" in */*) ;; *) AR=$(command -v "$AR") ;; esac
+MACHINE=${MACHINE:-}
+CROSS_COMPILE=${CROSS_COMPILE:-}
+if [ "$ARCH_NAME" = win-x64 ]; then
+	if [ -n "$CROSS_COMPILE" ] && command -v "${CROSS_COMPILE}ar" >/dev/null 2>&1; then
+		AR="${CROSS_COMPILE}ar"
+	elif [ -n "$MACHINE" ] && command -v "${MACHINE}-ar" >/dev/null 2>&1; then
+		AR="${MACHINE}-ar"
+	fi
+fi
+if ! command -v "$AR" >/dev/null 2>&1; then
+	echo "Archive tool $AR not found in PATH" >&2
+	exit 1
+fi
 case "$ARCH_NAME" in
 	mac-x64) expected=x86_64 ;;
 	mac-arm64) expected=arm64 ;;

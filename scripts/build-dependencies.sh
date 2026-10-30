@@ -17,11 +17,19 @@ CXX=${CXX:-c++}
 AR=${AR:-ar}
 RANLIB=${RANLIB:-ranlib}
 MACHINE=${MACHINE:-}
+CROSS_COMPILE=${CROSS_COMPILE:-}
 
-case "$CC" in */*) ;; *) CC=$(command -v "$CC") ;; esac
-case "$CXX" in */*) ;; *) CXX=$(command -v "$CXX") ;; esac
-case "$AR" in */*) ;; *) AR=$(command -v "$AR") ;; esac
-case "$RANLIB" in */*) ;; *) RANLIB=$(command -v "$RANLIB") ;; esac
+find_tool() {
+	tool=$1
+	if ! command -v "$tool" >/dev/null 2>&1; then
+		printf 'Required tool %s not found in PATH\n' "$tool" >&2
+		return 1
+	fi
+	# Keep PATH-resolved command names intact. CMake on MSYS can misread the
+	# Windows paths returned by command -v as compiler command lines.
+	printf '%s' "$tool"
+}
+
 AR_BIN=$AR
 
 mkdir -p "$SOURCE_ROOT" "$CACHE_ROOT" "$PREFIX"
@@ -78,8 +86,21 @@ case "$ARCH_NAME" in
 		platform=Windows
 		gamma_platform=windows
 		target_flags=""
-		AR_BIN=$(command -v x86_64-w64-mingw32-ar)
-		RANLIB=$(command -v x86_64-w64-mingw32-ranlib)
+		# Rack sets MACHINE to CROSS_COMPILE for cross builds. In native MSYS2
+		# builds MACHINE is the MinGW target triple while CC/CXX are commonly
+		# gcc/g++; prefer the explicit prefix, then triple-prefixed tools if
+		# available, and otherwise retain Rack's compiler commands.
+		if [ -n "$CROSS_COMPILE" ]; then
+			CC="${CROSS_COMPILE}gcc"
+			CXX="${CROSS_COMPILE}g++"
+			AR_BIN="${CROSS_COMPILE}ar"
+			RANLIB="${CROSS_COMPILE}ranlib"
+		elif [ -n "$MACHINE" ] && command -v "${MACHINE}-gcc" >/dev/null 2>&1; then
+			CC="${MACHINE}-gcc"
+			CXX="${MACHINE}-g++"
+			AR_BIN="${MACHINE}-ar"
+			RANLIB="${MACHINE}-ranlib"
+		fi
 		;;
 	lin-x64)
 		platform=Linux
@@ -94,6 +115,23 @@ case "$ARCH_NAME" in
 		;;
 esac
 
+printf 'Dependency target: %s\nCC: %s\nCXX: %s\nAR: %s\nRANLIB: %s\nMACHINE: %s\nCROSS_COMPILE: %s\n' \
+	"$ARCH_NAME" "$CC" "$CXX" "$AR_BIN" "$RANLIB" "$MACHINE" "$CROSS_COMPILE"
+CC=$(find_tool "$CC")
+CXX=$(find_tool "$CXX")
+AR_BIN=$(find_tool "$AR_BIN")
+RANLIB=$(find_tool "$RANLIB")
+AR_PATH=$(command -v "$AR_BIN")
+RANLIB_PATH=$(command -v "$RANLIB")
+
+if [ "$ARCH_NAME" = win-x64 ] && [ -n "$MACHINE" ]; then
+	compiler_target=$($CC -dumpmachine 2>/dev/null || true)
+	case "$compiler_target" in
+		*mingw32*) ;;
+		*) printf 'Compiler %s does not target Windows (reported %s; MACHINE=%s)\n' "$CC" "${compiler_target:-unknown}" "$MACHINE" >&2; exit 1 ;;
+	esac
+fi
+
 
 stk_build="$DEPS_ROOT/stk-build"
 # The upstream CMake file globs realtime/network sources even when REALTIME is
@@ -107,7 +145,7 @@ cmake -S "$SOURCE_ROOT/stk" -B "$stk_build" -G "$cmake_generator" \
 	-DCMAKE_SYSTEM_NAME="$platform" \
 	-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
 	-DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
-	-DCMAKE_AR="$AR_BIN" -DCMAKE_RANLIB="$RANLIB" \
+	-DCMAKE_AR="$AR_PATH" -DCMAKE_RANLIB="$RANLIB_PATH" \
 	-DCMAKE_C_FLAGS="$target_flags -fPIC" \
 	-DCMAKE_CXX_FLAGS="$target_flags -fPIC" \
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
