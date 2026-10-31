@@ -66,21 +66,11 @@ fetch_source stk "$STK_COMMIT" "$STK_SHA256" thestk
 fetch_source Gamma "$GAMMA_COMMIT" "$GAMMA_SHA256" LancePutnam
 
 case "$ARCH_NAME" in
-	mac-x64)
+	mac-x64|mac-arm64)
 		platform=Darwin
 		gamma_platform=macosx
 		target_flags=""
-		TOOL_PREFIX=${CC%-clang*}
-		AR_BIN="${TOOL_PREFIX}-ar"
-		RANLIB="${TOOL_PREFIX}-ranlib"
-		;;
-	mac-arm64)
-		platform=Darwin
-		gamma_platform=macosx
-		target_flags=""
-		TOOL_PREFIX=${CC%-clang*}
-		AR_BIN="${TOOL_PREFIX}-ar"
-		RANLIB="${TOOL_PREFIX}-ranlib"
+		# Keep Rack's tools, using the defaults above for empty values.
 		;;
 	win-x64)
 		platform=Windows
