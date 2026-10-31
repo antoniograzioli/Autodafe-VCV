@@ -76,20 +76,13 @@ case "$ARCH_NAME" in
 		platform=Windows
 		gamma_platform=windows
 		target_flags=""
-		# Rack sets MACHINE to CROSS_COMPILE for cross builds. In native MSYS2
-		# builds MACHINE is the MinGW target triple while CC/CXX are commonly
-		# gcc/g++; prefer the explicit prefix, then triple-prefixed tools if
-		# available, and otherwise retain Rack's compiler commands.
+		# Only CROSS_COMPILE selects prefixed tools. Native MSYS2 builds
+		# retain Rack's tools; MACHINE is a target triple, not a tool prefix.
 		if [ -n "$CROSS_COMPILE" ]; then
 			CC="${CROSS_COMPILE}gcc"
 			CXX="${CROSS_COMPILE}g++"
 			AR_BIN="${CROSS_COMPILE}ar"
 			RANLIB="${CROSS_COMPILE}ranlib"
-		elif [ -n "$MACHINE" ] && command -v "${MACHINE}-gcc" >/dev/null 2>&1; then
-			CC="${MACHINE}-gcc"
-			CXX="${MACHINE}-g++"
-			AR_BIN="${MACHINE}-ar"
-			RANLIB="${MACHINE}-ranlib"
 		fi
 		;;
 	lin-x64)
