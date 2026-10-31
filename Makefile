@@ -20,10 +20,16 @@ DISTRIBUTABLES += $(wildcard LICENSE*) res
 # Must include the VCV plugin Makefile framework
 include $(RACK_DIR)/plugin.mk
 
+# Keep MinGW's GCC and threading runtimes inside the plugin DLL. Resolve the
+# static C++ runtime before winpthread, then restore dynamic linking for Rack.
+ifdef ARCH_WIN
+LDFLAGS += -static-libgcc -Wl,-Bstatic -lstdc++ -lwinpthread -Wl,-Bdynamic
+endif
+
 $(DEPS_STAMP): scripts/build-dependencies.sh
 	@mkdir -p $(@D)
-	@# Let macOS dependency builds select osxcross ar instead of Make's built-in ar.
-	CC="$(CC)" CXX="$(CXX)" AR="$(if $(and $(filter mac-%,$(DEPS_ARCH)),$(filter default,$(origin AR))),,$(AR))" RANLIB="$(RANLIB)" \
+	@# Let cross builds select target ar instead of Make's built-in ar.
+	CC="$(CC)" CXX="$(CXX)" AR="$(if $(and $(filter mac-% win-%,$(DEPS_ARCH)),$(filter default,$(origin AR))),,$(AR))" RANLIB="$(RANLIB)" \
 	CROSS_COMPILE="$(CROSS_COMPILE)" MACHINE="$(MACHINE)" \
 	./scripts/build-dependencies.sh "$(DEPS_ARCH)" "$(DEPS_PREFIX)"
 
@@ -32,6 +38,7 @@ $(OBJECTS): $(DEPS_STAMP)
 
 .PHONY: audit-deps
 audit-deps: $(DEPS_STAMP)
-	AR="$(AR)" CROSS_COMPILE="$(CROSS_COMPILE)" MACHINE="$(MACHINE)" \
+	CC="$(CC)" AR="$(if $(and $(filter mac-% win-%,$(DEPS_ARCH)),$(filter default,$(origin AR))),,$(AR))" \
+	CROSS_COMPILE="$(CROSS_COMPILE)" MACHINE="$(MACHINE)" \
 	./scripts/audit-static-libraries.sh "$(DEPS_ARCH)" "$(DEPS_PREFIX)"
 

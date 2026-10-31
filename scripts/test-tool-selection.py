@@ -103,6 +103,29 @@ class ToolSelectionTests(unittest.TestCase):
         )
         self.assert_selected(result, *(WINDOWS_PREFIX + suffix for suffix in ("gcc", "g++", "ar", "ranlib")))
 
+    def test_official_windows_compiler_selects_archive_tools_without_cross_compile(self):
+        for suffix in ("ar", "ranlib"):
+            self.make_tool(WINDOWS_PREFIX + suffix)
+        for supplied_ar, supplied_ranlib in (("", ""), ("custom-ar", "custom-ranlib"),
+                                             ("ar", "ranlib"), ("custom-ar", "")):
+            with self.subTest(ar=supplied_ar, ranlib=supplied_ranlib):
+                for tool in (supplied_ar, supplied_ranlib):
+                    if tool:
+                        self.make_tool(tool)
+                result = self.run_selection(
+                    "win-x64", CC=WINDOWS_PREFIX + "gcc", CXX=WINDOWS_PREFIX + "g++",
+                    AR=supplied_ar, RANLIB=supplied_ranlib, MACHINE=WINDOWS_PREFIX[:-1],
+                )
+                self.assert_selected(result, WINDOWS_PREFIX + "gcc", WINDOWS_PREFIX + "g++",
+                                     supplied_ar or WINDOWS_PREFIX + "ar",
+                                     supplied_ranlib or WINDOWS_PREFIX + "ranlib")
+
+    def test_native_windows_ignores_machine_even_when_prefixed_tools_exist(self):
+        for suffix in ("ar", "ranlib"):
+            self.make_tool(WINDOWS_PREFIX + suffix)
+        result = self.run_selection("win-x64", MACHINE=WINDOWS_PREFIX[:-1])
+        self.assert_selected(result, "cc", "c++", "ar", "ranlib")
+
     def test_native_macos_preserves_rack_compilers(self):
         for arch in ("mac-arm64", "mac-x64"):
             with self.subTest(arch=arch):
@@ -163,30 +186,87 @@ class ToolSelectionTests(unittest.TestCase):
                                      "ar" if missing in ("ar", "both") else ar,
                                      "ranlib" if missing in ("ranlib", "both") else ranlib)
 
-    def test_make_macos_distinguishes_builtin_ar_from_overrides(self):
-        cc, cxx, ar, ranlib = self.osxcross_tools("mac-arm64")
+    def test_make_cross_builds_distinguish_builtin_ar_from_overrides(self):
         # Use the real dependency recipe with a minimal Rack makefile framework.
         shutil.copyfile(SCRIPT.parent.parent / "Makefile", self.root / "Makefile")
         sdk = self.root / "sdk"
         sdk.mkdir()
-        (sdk / "plugin.mk").write_text("ARCH_NAME := mac-arm64\nall: $(DEPS_STAMP)\n")
-        self.environment.update(CC=cc, CXX=cxx)
         del self.environment["AR"]
         del self.environment["RANLIB"]
-        # Seed sources through the same helper used by direct script tests.
-        self.run_selection("mac-arm64")
-        for override in (None, "ar", "custom-ar"):
-            with self.subTest(override=override):
-                if override:
-                    self.make_tool(override)
-                command = [shutil.which("make"), "all", f"RACK_DIR={sdk}"]
-                if override:
-                    command.append(f"AR={override}")
-                result = subprocess.run(command, cwd=self.root, env=self.environment,
-                                        capture_output=True, text=True, timeout=10)
-                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-                self.assertIn(f"AR: {override or ar}", result.stdout.splitlines())
-                self.assertIn(f"RANLIB: {ranlib}", result.stdout.splitlines())
+        for arch in ("mac-arm64", "win-x64"):
+            if arch == "mac-arm64":
+                cc, cxx, ar, ranlib = self.osxcross_tools(arch)
+            else:
+                cc, cxx, ar, ranlib = [WINDOWS_PREFIX + suffix for suffix in ("gcc", "g++", "ar", "ranlib")]
+                for tool in (cc, cxx, ar, ranlib):
+                    self.make_tool(tool)
+            (sdk / "plugin.mk").write_text(f"ARCH_NAME := {arch}\nall: $(DEPS_STAMP)\n")
+            self.environment.update(CC=cc, CXX=cxx)
+            # Seed sources through the same helper used by direct script tests.
+            self.run_selection(arch)
+            for origin in ("default", "environment", "command line"):
+                with self.subTest(arch=arch, origin=origin):
+                    override = None if origin == "default" else "ar"
+                    command = [shutil.which("make"), "all", f"RACK_DIR={sdk}"]
+                    environment = dict(self.environment)
+                    if origin == "environment":
+                        environment["AR"] = override
+                    elif origin == "command line":
+                        command.append(f"AR={override}")
+                    result = subprocess.run(command, cwd=self.root, env=environment,
+                                            capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn(f"AR: {override or ar}", result.stdout.splitlines())
+                    self.assertIn(f"RANLIB: {ranlib}", result.stdout.splitlines())
+
+    def run_archive_audit(self, arch, **overrides):
+        script = SCRIPT.with_name("audit-static-libraries.sh")
+        prefix = self.root / "prefix"
+        (prefix / "lib").mkdir(parents=True, exist_ok=True)
+        for name in ("stk", "Gamma"):
+            (prefix / "lib" / f"lib{name}.a").touch()
+        self.make_tool("mktemp", f'exec "{shutil.which("mktemp")}" "$@"\n')
+        for utility in ("rm",):
+            (self.bin / utility).symlink_to(shutil.which(utility))
+        self.make_tool("file", 'cat "$2"\n')
+        self.make_tool("objdump", 'cat "$2"\n')
+        archive_body = '''printf 'archive tool: %s\\n' "${0##*/}" >&2
+case "$1" in
+t) printf 'first.o\\nsecond.o\\n' ;;
+p) if [ "$3" = second.o ]; then printf '%s\\n' "$SECOND_FORMAT"; else printf '%s\\n' "$FIRST_FORMAT"; fi ;;
+esac
+'''
+        self.make_tool("ar", archive_body)
+        self.make_tool(WINDOWS_PREFIX + "ar", archive_body)
+        self.make_tool("nm", 'if [ "$MOCK_INDEX" = yes ]; then printf "Archive index:\\nsymbol in first.o\\n"; fi\n')
+        self.make_tool("otool", 'if [ "$MOCK_INDEX" = yes ]; then printf "Table of contents from: test(__.SYMDEF)\\nsize of ranlib structures: 8 (number 1)\\n"; fi\n')
+        environment = {**self.environment, "FIRST_FORMAT": "Mach-O 64-bit arm64 object",
+                       "SECOND_FORMAT": "Mach-O 64-bit arm64 object", "MOCK_INDEX": "yes", **overrides}
+        return subprocess.run(["/bin/sh", str(script), arch, str(prefix)], env=environment,
+                              capture_output=True, text=True, timeout=10)
+
+    def test_archive_audit_checks_every_member_and_exact_architecture(self):
+        result = self.run_archive_audit("mac-arm64", SECOND_FORMAT="Mach-O 64-bit x86_64 object")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("Wrong object format or architecture", result.stderr)
+        self.assertIn("second.o", result.stderr)
+
+    def test_archive_audit_rejects_host_format_with_same_cpu(self):
+        result = self.run_archive_audit("win-x64", FIRST_FORMAT="file format elf64-x86-64")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("Wrong object format or architecture", result.stderr)
+
+    def test_archive_audit_rejects_missing_symbol_table(self):
+        result = self.run_archive_audit("mac-arm64", MOCK_INDEX="no")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("Missing Darwin archive symbol table", result.stderr)
+
+    def test_archive_audit_native_windows_does_not_derive_from_machine(self):
+        result = self.run_archive_audit("win-x64", MACHINE=WINDOWS_PREFIX[:-1],
+                                        FIRST_FORMAT="file format pe-x86-64",
+                                        SECOND_FORMAT="file format pe-x86-64")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("archive tool: " + WINDOWS_PREFIX, result.stderr)
 
     def test_native_builds_preserve_supplied_tools(self):
         supplied = dict(CC="custom-cc", CXX="custom-cxx", AR="custom-ar", RANLIB="custom-ranlib")

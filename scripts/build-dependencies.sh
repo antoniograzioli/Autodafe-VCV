@@ -34,6 +34,17 @@ find_tool() {
 
 AR_BIN=$AR
 
+# A compiler's explicit target prefix identifies its archive format. Never use
+# MACHINE as a tool prefix: native Rack/MSYS2 builds also supply a target triple.
+select_archive_tools() {
+	if [ -z "$supplied_ar" ] && command -v "$1-ar" >/dev/null 2>&1; then
+		AR_BIN="$1-ar"
+	fi
+	if [ -z "$supplied_ranlib" ] && command -v "$1-ranlib" >/dev/null 2>&1; then
+		RANLIB="$1-ranlib"
+	fi
+}
+
 mkdir -p "$SOURCE_ROOT" "$CACHE_ROOT" "$PREFIX"
 PREFIX=$(CDPATH= cd -- "$PREFIX" && pwd)
 
@@ -78,12 +89,7 @@ case "$ARCH_NAME" in
 			*-apple-darwin*-clang)
 				toolchain_prefix=${CC##*/}
 				toolchain_prefix=${toolchain_prefix%-clang}
-				if [ -z "$supplied_ar" ] && command -v "$toolchain_prefix-ar" >/dev/null 2>&1; then
-					AR_BIN="$toolchain_prefix-ar"
-				fi
-				if [ -z "$supplied_ranlib" ] && command -v "$toolchain_prefix-ranlib" >/dev/null 2>&1; then
-					RANLIB="$toolchain_prefix-ranlib"
-				fi
+				select_archive_tools "$toolchain_prefix"
 				;;
 		esac
 		;;
@@ -91,13 +97,20 @@ case "$ARCH_NAME" in
 		platform=Windows
 		gamma_platform=windows
 		target_flags=""
-		# Only CROSS_COMPILE selects prefixed tools. Native MSYS2 builds
-		# retain Rack's tools; MACHINE is a target triple, not a tool prefix.
+		# Explicit CROSS_COMPILE retains its existing tool selection. The
+		# official Linux builder instead exports target-prefixed CC/CXX only.
 		if [ -n "$CROSS_COMPILE" ]; then
 			CC="${CROSS_COMPILE}gcc"
 			CXX="${CROSS_COMPILE}g++"
 			AR_BIN="${CROSS_COMPILE}ar"
 			RANLIB="${CROSS_COMPILE}ranlib"
+		else
+			case "${CC##*/}" in
+				*-mingw32-gcc|*-mingw32-clang)
+					toolchain_prefix=${CC##*/}
+					select_archive_tools "${toolchain_prefix%-*}"
+					;;
+			esac
 		fi
 		;;
 	lin-x64)
@@ -172,7 +185,6 @@ gamma_sources="arr Conversion Domain DFT FFT_fftpack fftpack++1 fftpack++2 Print
 	"$AR_BIN" crs "$PREFIX/lib/libGamma.a" $gamma_objects_list
 	"$RANLIB" "$PREFIX/lib/libGamma.a"
 )
-cp -R "$SOURCE_ROOT/Gamma/Gamma" "$PREFIX/include/"
 cp -R "$SOURCE_ROOT/Gamma/Gamma" "$PREFIX/include/"
 
 printf '%s\n' "$ARCH_NAME $STK_COMMIT $GAMMA_COMMIT" > "$DEPS_ROOT/.built"
