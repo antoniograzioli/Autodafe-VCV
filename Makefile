@@ -22,7 +22,8 @@ include $(RACK_DIR)/plugin.mk
 
 $(DEPS_STAMP): scripts/build-dependencies.sh
 	@mkdir -p $(@D)
-	CC="$(CC)" CXX="$(CXX)" AR="$(AR)" RANLIB="$(RANLIB)" \
+	@# Let macOS dependency builds select osxcross ar instead of Make's built-in ar.
+	CC="$(CC)" CXX="$(CXX)" AR="$(if $(and $(filter mac-%,$(DEPS_ARCH)),$(filter default,$(origin AR))),,$(AR))" RANLIB="$(RANLIB)" \
 	CROSS_COMPILE="$(CROSS_COMPILE)" MACHINE="$(MACHINE)" \
 	./scripts/build-dependencies.sh "$(DEPS_ARCH)" "$(DEPS_PREFIX)"
 

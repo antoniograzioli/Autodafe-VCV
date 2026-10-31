@@ -14,6 +14,8 @@ GAMMA_SHA256=9222d22586a7c23f8851ddc8a626b334b0f016a0e010f7409bff1dd0a334f65d
 
 CC=${CC:-cc}
 CXX=${CXX:-c++}
+supplied_ar=${AR:-}
+supplied_ranlib=${RANLIB:-}
 AR=${AR:-ar}
 RANLIB=${RANLIB:-ranlib}
 MACHINE=${MACHINE:-}
@@ -70,7 +72,20 @@ case "$ARCH_NAME" in
 		platform=Darwin
 		gamma_platform=macosx
 		target_flags=""
-		# Keep Rack's tools, using the defaults above for empty values.
+		# Only osxcross compiler names imply prefixed Darwin archive tools.
+		# Native cc/clang keep the supplied tools or the defaults above.
+		case "${CC##*/}" in
+			*-apple-darwin*-clang)
+				toolchain_prefix=${CC##*/}
+				toolchain_prefix=${toolchain_prefix%-clang}
+				if [ -z "$supplied_ar" ] && command -v "$toolchain_prefix-ar" >/dev/null 2>&1; then
+					AR_BIN="$toolchain_prefix-ar"
+				fi
+				if [ -z "$supplied_ranlib" ] && command -v "$toolchain_prefix-ranlib" >/dev/null 2>&1; then
+					RANLIB="$toolchain_prefix-ranlib"
+				fi
+				;;
+		esac
 		;;
 	win-x64)
 		platform=Windows

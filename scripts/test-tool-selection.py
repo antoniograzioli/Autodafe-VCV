@@ -23,6 +23,7 @@ class ToolSelectionTests(unittest.TestCase):
         scripts.mkdir()
         self.script = scripts / SCRIPT.name
         shutil.copyfile(SCRIPT, self.script)
+        self.script.chmod(0o755)
         self.bin = self.root / "bin"
         self.bin.mkdir()
 
@@ -107,6 +108,85 @@ class ToolSelectionTests(unittest.TestCase):
             with self.subTest(arch=arch):
                 result = self.run_selection(arch, MACHINE="arm64-apple-darwin25.6.0")
                 self.assert_selected(result, "cc", "c++", "ar", "ranlib")
+
+    def test_native_macos_clang_uses_default_archive_tools(self):
+        self.make_tool("clang")
+        for arch in ("mac-arm64", "mac-x64"):
+            with self.subTest(arch=arch):
+                result = self.run_selection(arch, CC="clang")
+                self.assert_selected(result, "clang", "c++", "ar", "ranlib")
+
+    def osxcross_tools(self, arch):
+        cpu = "arm64" if arch == "mac-arm64" else "x86_64"
+        prefix = f"{cpu}-apple-darwin21.4-"
+        tools = [prefix + suffix for suffix in ("clang", "clang++-libc++", "ar", "ranlib")]
+        for tool in tools:
+            self.make_tool(tool)
+        return tools
+
+    def test_osxcross_selects_archive_tools(self):
+        for arch in ("mac-arm64", "mac-x64"):
+            with self.subTest(arch=arch):
+                cc, cxx, ar, ranlib = self.osxcross_tools(arch)
+                result = self.run_selection(arch, CC=cc, CXX=cxx, AR="", RANLIB="")
+                self.assert_selected(result, cc, cxx, ar, ranlib)
+
+    def test_osxcross_defaults_unset_archive_tools(self):
+        cc, cxx, ar, ranlib = self.osxcross_tools("mac-arm64")
+        del self.environment["AR"]
+        del self.environment["RANLIB"]
+        result = self.run_selection("mac-arm64", CC=cc, CXX=cxx)
+        self.assert_selected(result, cc, cxx, ar, ranlib)
+
+    def test_osxcross_preserves_each_explicit_override(self):
+        for arch in ("mac-arm64", "mac-x64"):
+            cc, cxx, cross_ar, cross_ranlib = self.osxcross_tools(arch)
+            for ar, ranlib in (("custom-ar", "custom-ranlib"), ("ar", "ranlib"),
+                               ("custom-ar", ""), ("", "custom-ranlib")):
+                with self.subTest(arch=arch, ar=ar, ranlib=ranlib):
+                    for tool in (ar, ranlib):
+                        if tool:
+                            self.make_tool(tool)
+                    result = self.run_selection(arch, CC=cc, CXX=cxx, AR=ar, RANLIB=ranlib)
+                    self.assert_selected(result, cc, cxx, ar or cross_ar, ranlib or cross_ranlib)
+
+    def test_osxcross_only_selects_available_tools(self):
+        for missing in ("ar", "ranlib", "both"):
+            with self.subTest(missing=missing):
+                cc, cxx, ar, ranlib = self.osxcross_tools("mac-arm64")
+                if missing in ("ar", "both"):
+                    (self.bin / ar).unlink()
+                if missing in ("ranlib", "both"):
+                    (self.bin / ranlib).unlink()
+                result = self.run_selection("mac-arm64", CC=cc, CXX=cxx, AR="", RANLIB="")
+                self.assert_selected(result, cc, cxx,
+                                     "ar" if missing in ("ar", "both") else ar,
+                                     "ranlib" if missing in ("ranlib", "both") else ranlib)
+
+    def test_make_macos_distinguishes_builtin_ar_from_overrides(self):
+        cc, cxx, ar, ranlib = self.osxcross_tools("mac-arm64")
+        # Use the real dependency recipe with a minimal Rack makefile framework.
+        shutil.copyfile(SCRIPT.parent.parent / "Makefile", self.root / "Makefile")
+        sdk = self.root / "sdk"
+        sdk.mkdir()
+        (sdk / "plugin.mk").write_text("ARCH_NAME := mac-arm64\nall: $(DEPS_STAMP)\n")
+        self.environment.update(CC=cc, CXX=cxx)
+        del self.environment["AR"]
+        del self.environment["RANLIB"]
+        # Seed sources through the same helper used by direct script tests.
+        self.run_selection("mac-arm64")
+        for override in (None, "ar", "custom-ar"):
+            with self.subTest(override=override):
+                if override:
+                    self.make_tool(override)
+                command = [shutil.which("make"), "all", f"RACK_DIR={sdk}"]
+                if override:
+                    command.append(f"AR={override}")
+                result = subprocess.run(command, cwd=self.root, env=self.environment,
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn(f"AR: {override or ar}", result.stdout.splitlines())
+                self.assertIn(f"RANLIB: {ranlib}", result.stdout.splitlines())
 
     def test_native_builds_preserve_supplied_tools(self):
         supplied = dict(CC="custom-cc", CXX="custom-cxx", AR="custom-ar", RANLIB="custom-ranlib")
